@@ -56,9 +56,9 @@ class Product(Base):
 
     category: Mapped[Optional["Category"]] = relationship(back_populates="products")
     supplier: Mapped[Optional["Supplier"]] = relationship(back_populates="products")
-    stock_movements: Mapped[list["Stock_movement"]] = relationship(back_populates="product")
+    stock_movements: Mapped[list["StockMovement"]] = relationship(back_populates="product")
 
-class Stock_movement(Base):
+class StockMovement(Base):
     __tablename__ = "stock_movements"
     __table_args__ = (
         CheckConstraint("quantity > 0", name = "check_quantity_not_negative"),
