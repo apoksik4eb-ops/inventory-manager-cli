@@ -1,6 +1,6 @@
 from sqlalchemy import select, update, delete, func
 from database import SessionLocal
-from models import Category, Supplier, Product, Stock_movement
+from models import Category, Supplier, Product, StockMovement
 
 from decimal import Decimal
 from typing import Optional
@@ -62,10 +62,10 @@ def create_product(
 def create_stock_movement(
         product_id: int,
         movement_type: str,
-        quantity: int       
+        quantity: Decimal       
 ):
     with SessionLocal() as session:
-        stock_movement = Stock_movement(
+        stock_movement = StockMovement(
             product_id=product_id,
             movement_type=movement_type,
             quantity=quantity
@@ -94,6 +94,23 @@ def get_all_products():
         stmt = select(Product)
         products = session.execute(stmt).scalars().all()
         return products
+    
+def get_product_by_id(product_id: int):
+    with SessionLocal() as session:
+        product_by_id = session.get(Product, product_id)
+        return product_by_id
+    
+def delete_supplier(supplier_id: int):
+    with SessionLocal() as session:
+        supplier = session.get(Supplier, supplier_id)
+
+        if supplier is None:
+            return False
+        
+        session.delete(supplier)
+        session.commit()
+
+        return True
     
 # def get_employees_with_salary_gt(amount: Decimal):
 #     with SessionLocal() as session:
@@ -129,18 +146,6 @@ def get_all_products():
 
 #         session.execute(stmt)
 #         session.commit()
-
-# def delete_project(project_id: int):
-#     with SessionLocal() as session:
-#         project = session.get(Project, project_id)
-
-#         if project is None:
-#             return False
-        
-#         session.delete(project)
-#         session.commit()
-
-#         return True
     
 # def delete_project_via_delete(project_id: int):
 #     with SessionLocal() as session:
