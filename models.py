@@ -45,7 +45,7 @@ class Product(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(Text, nullable=False)
-    sku: Mapped[str] = mapped_column(Text, unique=True)
+    sku: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"), nullable=True)
     supplier_id: Mapped[Optional[int]] = mapped_column(ForeignKey("suppliers.id"), nullable=True)
     purchase_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2), nullable=True)
