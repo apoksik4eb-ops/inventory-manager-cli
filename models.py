@@ -71,4 +71,4 @@ class StockMovement(Base):
     quantity: Mapped[Decimal] = mapped_column(Numeric(12, 3), nullable=False)
     created_at: Mapped[date] = mapped_column(Date, server_default=text("CURRENT_DATE"))
 
-    product: Mapped[list["Product"]] = relationship(back_populates="stock_movements")
+    product: Mapped["Product"] = relationship(back_populates="stock_movements")
