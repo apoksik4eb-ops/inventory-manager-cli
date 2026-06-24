@@ -3,43 +3,30 @@ from database import Base, engine
 from crud import (
     create_category,
     get_all_categories,
-    get_category_by_id,
-    update_category_name,
-    delete_category,
     create_supplier,
     get_all_suppliers,
-    get_supplier_by_id,
-    update_supplier_contacts,
     deactivate_supplier,
-    delete_supplier,
     create_product,
     get_all_products,
     get_product_by_id,
-    get_products_by_category,
-    get_products_by_supplier,
     update_product_prices,
-    update_product_min_quantity,
     deactivate_product,
-    delete_product,
     create_stock_movement,
-    get_all_stock_movements,
     get_stock_movements_by_product,
-    delete_stock_movement
 )
 
 from reports import (
-    get_products_with_category_and_supplier,
     get_stock_movements_with_product,
     get_products_count_by_category,
     get_products_count_by_supplier,
     get_current_stock_by_product,
     get_low_stock_products,
-    get_total_purchase_value,
-    get_total_selling_value,
-    get_potential_profit
+    get_current_stock_for_all_products,
+    get_purchase_value_report
 )
 
 def show_menu():
+    print()
     print("Inventory Manager CLI")
     print()
     print("1. Создать категорию")
@@ -80,8 +67,16 @@ def main():
 
         if choice == "1":
             name = input("Введите название категории: ")
+            if not name:
+                print("Название категории не может быть пустым.")
+                continue
+
             category = create_category(name)
-            print(f"Категория '{category.name}' успешно добавлена.")
+            
+            if isinstance(category, str):
+                print(category)
+            else:
+                print(f"Категория '{category.name}' успешно добавлена.")
 
         elif choice == "2":
             categories = get_all_categories()
@@ -93,6 +88,11 @@ def main():
 
         elif choice == "3":
             name = input("Введите название поставщика: ")
+
+            if not name:
+                print("Название поставщика не может быть пустым.")
+                continue
+
             phone = input("Введите телефон поставщика: ")
             email = input("Введите email поставщика: ")
 
@@ -102,7 +102,10 @@ def main():
                 email=email if email else None
             )
 
-            print(f"Поставщик '{supplier.name}' успешно добавлен.")
+            if isinstance(supplier, str):
+                print(supplier)
+            else:
+                print(f"Поставщик '{supplier.name}' успешно добавлен.")
 
         elif choice == "4":
             suppliers = get_all_suppliers()
@@ -124,9 +127,27 @@ def main():
 
         elif choice == "6":
             name = input("Введите название товара: ")
+            if not name:
+                print("Название товара не может быть пустым.")
+                continue
+
             sku = input("Введите уникальный артикул товара: ")
-            category_id = input("Введите ID категории: ")
-            supplier_id = input("Введите ID поставщика: ")
+            if not sku:
+                print("SKU не может быть пустым.")
+                continue
+
+            try:
+                category_id = int(input("Введите ID категории: "))
+            except ValueError:
+                print("ID категории должен быть числом.")
+                continue
+
+            try:
+                supplier_id = int(input("Введите ID поставщика: "))
+            except ValueError:
+                print("ID поставщика должен быть числом.")
+                continue
+
             purchase_price = Decimal(input("Введите закупочную цену: "))
             selling_price = Decimal(input("Введите продажная цену: "))
             min_quantity = Decimal(input("Введите минимальный остаток: "))
@@ -134,14 +155,17 @@ def main():
             product = create_product(
                 name=name,
                 sku=sku,
-                category_id=int(category_id) if category_id else None,
-                supplier_id=int(supplier_id) if supplier_id else None,
+                category_id=category_id,
+                supplier_id=supplier_id,
                 purchase_price=purchase_price,
                 selling_price=selling_price,
                 min_quantity=min_quantity
             )
 
-            print(f"Продукт '{product.name}' успешно добавлен.")
+            if isinstance(product, str):
+                print(product)
+            else:
+                print(f"Продукт '{product.name}' успешно добавлен.")
 
         elif choice == "7":
             products = get_all_products()
@@ -170,7 +194,12 @@ def main():
             purchase = Decimal(new_purchase) if new_purchase else None
             selling = Decimal(new_selling) if new_selling else None
 
-            update_product_prices(product_id, purchase, selling)
+            product = update_product_prices(product_id, purchase, selling)
+
+            if product:
+                print("Цены успешно обновлены.")
+            else:
+                print("Товар не найден.")
 
         elif choice == "10":
             product_id = int(input("Введите ID товара: "))
@@ -185,29 +214,35 @@ def main():
         elif choice == "11":
             product_id = int(input("Введите ID товара: "))
             quantity = Decimal(input("Введите количество: "))
-            create_stock_movement(product_id, "IN", quantity)
+            stock_movement = create_stock_movement(product_id, "IN", quantity)
 
-            product = get_product_by_id(product_id)
-
-            print(f"Товар '{product.name}' в количестве {quantity} успешно добавлен.")
+            if isinstance(stock_movement, str):
+                print(stock_movement)
+            else:
+                product = get_product_by_id(product_id)
+                print(f"Товар '{product.name}' в количестве {quantity} успешно добавлен.")
 
         elif choice == "12":
             product_id = int(input("ID товара: "))
             quantity = Decimal(input("Количество: "))
-            create_stock_movement(product_id, "OUT", quantity)
+            stock_movement = create_stock_movement(product_id, "OUT", quantity)
 
-            product = get_product_by_id(product_id)
-
-            print(f"Товар '{product.name}' в количестве {quantity} успешно списан.")
+            if isinstance(stock_movement, str):
+                print(stock_movement)
+            else:
+                product = get_product_by_id(product_id)
+                print(f"Товар '{product.name}' в количестве {quantity} успешно списан.")
 
         elif choice == "13":
             product_id = int(input("ID товара: "))
             quantity = Decimal(input("Количество: "))
-            create_stock_movement(product_id, "ADJUST", quantity)
+            stock_movement = create_stock_movement(product_id, "ADJUST", quantity)
 
-            product = get_product_by_id(product_id)
-
-            print(f"Товар '{product.name}' в количестве {quantity} успешно скорректирован.")
+            if isinstance(stock_movement, str):
+                print(stock_movement)
+            else:
+                product = get_product_by_id(product_id)
+                print(f"Товар '{product.name}' в количестве {quantity} успешно скорректирован.")
         
         elif choice == "14":
             rows = get_stock_movements_with_product()
@@ -220,44 +255,61 @@ def main():
         elif choice == "15":
             product_id = int(input("ID товара: "))
 
-            movements = get_stock_movements_by_product(product_id)
+            product = get_product_by_id(product_id)
 
+            if product is None:
+                print("Товар не найден.")
+                continue
+
+            movements = get_stock_movements_by_product(product_id)
+            
+            print(f"{product.name}:")
             for movement in movements:
                 print(movement.created_at, movement.movement_type, movement.quantity)
 
         elif choice == "16":
-            product_id = int(input("ID товара: "))
+            stocks = get_current_stock_for_all_products()
 
-            stock = get_current_stock_by_product(product_id)
-            product = get_product_by_id(product_id)    
-            print(f"Текущий остаток '{product.name}': {stock}")
+            for product, stock in stocks:
+                print(f"{product}: {stock}")
 
         elif choice == "17":
             products = get_low_stock_products()
 
-            for product in products:
-                print(product.id, product.name)
+            if not products:
+                print("Нет товаров, которые заканчиваются.")
+            else:
+                for product in products:
+                    current_stock = get_current_stock_by_product(product.id)
+
+                    print(product.name)
+                    print(f"Остаток: {current_stock}")
+                    print(f"Минимальный остаток: {product.min_quantity}")
+                    print()
 
         elif choice == "18":
-            print("Стоимость закупки:", get_total_purchase_value())
-            print("Стоимость продажи:", get_total_selling_value())
-            print("Потенциальная прибыль:", get_potential_profit())
+            report, total_value = get_purchase_value_report()
+
+            for name, stock, purchase_price, value in report:
+                print(f"{name}:")
+                print(f"Остаток: {stock}")
+                print(f"Закупочная цена: {purchase_price}")
+                print(f"Стоимость остатка: {value:.2f}")
+                print()
+
+            print(f"Итого по складу: {total_value:.2f}")
 
         elif choice == "19":
-            category_id = int(input("Введите ID категории: "))
+            products = get_products_count_by_category()
 
-            products = get_products_by_category(category_id)
-
-            for product in products:
-                print(product.id, product.name, product.sku)
+            for category, count in products:
+                print(f"{category}: {count}")
 
         elif choice == "20":
-            supplier_id = int(input("Введите ID поставщика: "))
+            products = get_products_count_by_supplier()
 
-            products = get_products_by_supplier(supplier_id)
-
-            for product in products:
-                print(product.id, product.name, product.sku)
+            for supplier, count in products:
+                print(f"{supplier}: {count}")
 
         elif choice == "0":
             break
