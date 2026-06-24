@@ -27,7 +27,7 @@ with SessionLocal() as session:
 
     laptop = Product(
         name="Laptop Lenovo ThinkPad",
-        sku="LP001",
+        sku="LP-001",
         category_id=electronics.id,
         supplier_id=techtrade.id,
         purchase_price=Decimal("700"),
@@ -37,7 +37,7 @@ with SessionLocal() as session:
 
     mouse = Product(
         name="Wireless Mouse",
-        sku="MS001",
+        sku="MS-001",
         category_id=electronics.id,
         supplier_id=techtrade.id,
         purchase_price=Decimal("15"),
@@ -47,7 +47,7 @@ with SessionLocal() as session:
 
     chair = Product(
         name="Office Chair",
-        sku="CH001",
+        sku="CH-001",
         category_id=furniture.id,
         supplier_id=woodfactory.id,
         purchase_price=Decimal("80"),
@@ -57,7 +57,7 @@ with SessionLocal() as session:
 
     paper = Product(
         name="A4 Paper Pack",
-        sku="PP001",
+        sku="PP-001",
         category_id=office.id,
         supplier_id=officemarket.id,
         purchase_price=Decimal("3"),
@@ -67,7 +67,7 @@ with SessionLocal() as session:
 
     screwdriver = Product(
         name="Screwdriver Set",
-        sku="SD001",
+        sku="SD-001",
         category_id=tools.id,
         supplier_id=globaltools.id,
         purchase_price=Decimal("20"),
@@ -77,7 +77,7 @@ with SessionLocal() as session:
 
     monitor = Product(
         name="Monitor 27 inch",
-        sku="MN001",
+        sku="MN-001",
         category_id=electronics.id,
         supplier_id=techtrade.id,
         purchase_price=Decimal("180"),

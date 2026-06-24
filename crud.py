@@ -147,7 +147,29 @@ def create_product(
         selling_price: Decimal | None = None,
         min_quantity: Decimal | None = None
 ):
+    if purchase_price is not None and purchase_price < 0:
+        return "Закупочная цена не может быть отрицательной."
+
+    if selling_price is not None and selling_price < 0:
+        return "Продажная цена не может быть отрицательной."
+
+    if min_quantity is not None and min_quantity < 0:
+        return "Минимальный остаток не может быть отрицательным."
+    
     with SessionLocal() as session:
+
+        if category_id is not None:
+            category = session.get(Category, category_id)
+
+            if category is None:
+                return "Категория не найдена."
+
+        if supplier_id is not None:
+            supplier = session.get(Supplier, supplier_id)
+
+            if supplier is None:
+                return "Поставщик не найден."
+            
         product = Product(
             name=name,
             sku=sku,
@@ -166,7 +188,7 @@ def create_product(
         
         except IntegrityError:
             session.rollback()
-            return "Невозможно создать 2 одинаковых товара с одинаковой единицей складского учета"
+            return "Невозможно создать 2 товара с одинаковым уникальным артикулом."
 
 def get_all_products():
     with SessionLocal() as session:
@@ -192,6 +214,13 @@ def get_products_by_supplier(supplier_id: int):
         return products
         
 def update_product_prices(product_id: int, new_purchase_price: Decimal | None, new_selling_price: Decimal | None):
+    
+    if new_purchase_price is not None and new_purchase_price < 0:
+        return "Закупочная цена не может быть отрицательной."
+
+    if new_selling_price is not None and new_selling_price < 0:
+        return "Продажная цена не может быть отрицательной."
+    
     with SessionLocal() as session:
         product = session.get(Product, product_id)
 
@@ -214,6 +243,9 @@ def update_product_min_quantity(product_id: int, new_min_quantity: Decimal):
 
         if product is None:
             return None
+        
+        if new_min_quantity < 0:
+            return "Минимальный остаток не может быть отрицательным."
         
         product.min_quantity = new_min_quantity
 
@@ -255,7 +287,15 @@ def create_stock_movement(
         movement_type: str,
         quantity: Decimal       
 ):
+    if quantity <= 0:
+        return "Количество должно быть больше нуля."
+    
     with SessionLocal() as session:
+        product = session.get(Product, product_id)
+
+        if product is None:
+            return "Товар не найден."
+        
         stock_movement = StockMovement(
             product_id=product_id,
             movement_type=movement_type,

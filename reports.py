@@ -48,11 +48,18 @@ def get_products_count_by_supplier():
     
 def get_current_stock_by_product(product_id: int):
     with SessionLocal() as session:
-        stmt = select(func.sum(case(
-            (StockMovement.movement_type == "IN", StockMovement.quantity),
-            (StockMovement.movement_type == "ADJUST", StockMovement.quantity),
-            (StockMovement.movement_type == "OUT", -StockMovement.quantity)
-        ))).where(StockMovement.product_id == product_id)
+        stmt = select(
+            func.coalesce(
+                func.sum(
+                    case(
+                        (StockMovement.movement_type == "IN", StockMovement.quantity),
+                        (StockMovement.movement_type == "ADJUST", StockMovement.quantity),
+                        (StockMovement.movement_type == "OUT", -StockMovement.quantity)
+                    )
+                ),
+                0
+            )
+        ).where(StockMovement.product_id == product_id)
 
         return session.scalar(stmt)
 
@@ -65,7 +72,10 @@ def get_low_stock_products():
         for product in products:
             current_stock = get_current_stock_by_product(product.id)
 
-            if product.min_quantity is not None and current_stock < product.min_quantity:
+            if current_stock is None:
+                current_stock = Decimal("0")
+
+            if product.min_quantity is not None and current_stock <= product.min_quantity:
                 low_stock.append(product)
 
         return low_stock
@@ -108,3 +118,76 @@ def get_potential_profit():
                 total_profit += current_stock * (product.selling_price - product.purchase_price)
         
         return total_profit
+    
+def get_current_stock_for_all_products():
+    with SessionLocal() as session:
+        products = session.scalars(select(Product)).all()
+
+        result = []
+
+        for product in products:
+            current_stock = get_current_stock_by_product(product.id)
+
+            if current_stock is None:
+                current_stock = Decimal("0")
+
+            result.append((product.name, current_stock))
+
+        return result
+    
+def get_purchase_value_report():
+    with SessionLocal() as session:
+        products = session.scalars(select(Product)).all()
+
+        report = []
+        total_value = Decimal("0")
+
+        for product in products:
+            current_stock = get_current_stock_by_product(product.id)
+
+            if current_stock is None:
+                current_stock = Decimal("0")
+
+            if product.purchase_price is not None:
+                value = current_stock * product.purchase_price
+                total_value += value
+
+                report.append((product.name, current_stock, product.purchase_price, value))
+
+        return report, total_value
+    
+def get_selling_value_report():
+    with SessionLocal() as session:
+        products = session.scalars(select(Product)).all()
+
+        report = []
+        total_value = Decimal("0")
+
+        for product in products:
+            current_stock = get_current_stock_by_product(product.id)
+
+            if product.selling_price is not None:
+                value = current_stock * product.selling_price
+                total_value += value
+
+                report.append((product.name, current_stock, product.selling_price, value))
+
+        return report, total_value
+    
+def get_profit_report():
+    with SessionLocal() as session:
+        products = session.scalars(select(Product)).all()
+
+        report = []
+        total_profit = Decimal("0")
+
+        for product in products:
+            current_stock = get_current_stock_by_product(product.id)
+
+            if product.purchase_price is not None and product.selling_price is not None:
+                profit = current_stock * (product.selling_price - product.purchase_price)
+                total_profit += profit
+
+                report.append((product.name, current_stock, product.purchase_price, product.selling_price, profit))
+
+        return report, total_profit
